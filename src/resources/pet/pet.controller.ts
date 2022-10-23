@@ -2,9 +2,11 @@ import { Router, Request, Response, NextFunction } from 'express';
 import Controller from '@/utils/interfaces/controller.interface';
 import HttpException from '@/utils/exceptions/http.exception';
 import validationMiddleware from '@/middleware/validation.middleware';
+import authenticatedMiddleware from '@/middleware/authenticated.middleware';
 import validate from '@/resources/pet/pet.validation';
 import PetService from '@/resources/pet/pet.service';
 import mongoose from 'mongoose';
+import passport from 'passport';
 
 class PetController implements Controller {
   public path = '/pets';
@@ -18,6 +20,8 @@ class PetController implements Controller {
   private initializeRoutes(): void {
     this.router.post(
       `${this.path}`,
+      passport.authenticate('jwt', { session: false }),
+      authenticatedMiddleware,
       validationMiddleware(validate.create),
       this.create
     );
@@ -26,11 +30,20 @@ class PetController implements Controller {
 
     this.router.patch(
       `${this.path}/:id`,
+      passport.authenticate('jwt', { session: false }),
+      authenticatedMiddleware,
       validationMiddleware(validate.update),
       this.update
     );
 
-    this.router.delete(`${this.path}/:id`, this.delete);
+    this.router.delete(
+      `${this.path}/:id`,
+      passport.authenticate('jwt', { session: false }),
+      authenticatedMiddleware,
+      this.delete
+    );
+
+    this.router.get(`${this.path}/:id`, this.getPet);
   }
 
   private create = async (
@@ -60,6 +73,23 @@ class PetController implements Controller {
       res.status(200).json({ PetList });
     } catch (error) {
       next(new HttpException(404, 'Cannot fetch the pet list'));
+    }
+  };
+
+  private getPet = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> => {
+    try {
+      const { id } = req.params;
+      const pet = await this.PetService.getPet(id);
+
+      if (pet) res.status(200).json({ pet });
+      else
+        res.status(404).json({ message: `Cannot find the pet with id=${id}` });
+    } catch (error) {
+      next(new HttpException(404, 'Cannot fetch the pet pet information'));
     }
   };
 

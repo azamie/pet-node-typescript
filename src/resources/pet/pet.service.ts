@@ -21,6 +21,9 @@ class PetService {
     }
   }
 
+  /**
+   *  Fetch pet list
+   */
   public async getPets(): Promise<Pet[]> {
     try {
       const petList = await this.pet.find();
@@ -31,6 +34,22 @@ class PetService {
     }
   }
 
+  /**
+   *  Fetch a pet information
+   */
+  public async getPet(id: string): Promise<Pet|null> {
+    try {
+      const petList = await this.pet.findOne({_id: id});
+
+      return petList;
+    } catch (error) {
+      throw new Error('Unable to fetch the pet');
+    }
+  }
+
+  /**
+   *  Update a pet
+   */
   public async update(
     id: string,
     name: string,
@@ -45,6 +64,9 @@ class PetService {
     }
   }
 
+  /**
+   *  Delete a pet
+   */
   public async delete(id: string): Promise<void> {
     try {
       await this.pet.findByIdAndRemove(id);

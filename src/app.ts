@@ -4,8 +4,10 @@ import compression from 'compression';
 import cors from 'cors';
 import morgan from 'morgan';
 import Controller from '@/utils/interfaces/controller.interface';
+import passportConfigInitialize from '@/utils/passportInit';
 import ErrorMiddleware from '@/middleware/error.middleware';
 import helmet from 'helmet';
+import passport from 'passport';
 
 class App {
   public express: Application;
@@ -16,11 +18,18 @@ class App {
     this.port = port;
 
     this.initializeDatabaseConnection();
+    this.initializePassportMiddleWare();
     this.initializeMiddleware();
     this.initializeControllers(controllers);
     this.initializeErrorHandling();
   }
 
+  private initializePassportMiddleWare(): void {
+    const configPassport = passportConfigInitialize();
+    passport.use(configPassport);
+
+    this.express.use(passport.initialize());
+  }
   private initializeMiddleware(): void {
     this.express.use(helmet());
     this.express.use(cors());
